@@ -840,6 +840,7 @@ var FixedDataTable = React.createClass({
       newColumnGroups[i] = cloneWithProps(
         columnGroups[i],
         {
+          cellRenderer: columnGroups[i].props.groupHeaderRenderer || renderToString,
           dataKey: i,
           children: undefined,
           columnData: columnGroups[i].props.columnGroupData,
@@ -926,6 +927,14 @@ var FixedDataTable = React.createClass({
   _onWheel(/*number*/ deltaX, /*number*/ deltaY) {
     if (this.isMounted()) {
       var x = this.state.scrollX;
+
+      // JLR: allow use of onWheel property, preventing where appropriate
+      
+      if (this.props.onWheel) {
+        var result = this.props.onWheel(this.state, deltaX, deltaY);
+        if (!result) return;
+      }
+
       if (Math.abs(deltaY) > Math.abs(deltaX) &&
           this.props.overflowY !== 'hidden') {
         var scrollState = this._scrollHelper.scrollBy(Math.round(deltaY));

@@ -170,25 +170,25 @@ var FixedDataTable =
 
 	/* jslint bitwise: true */
 
-	var FixedDataTableHelper = __webpack_require__(18);
-	var Locale = __webpack_require__(19);
-	var React = __webpack_require__(20);
-	var ReactComponentWithPureRenderMixin = __webpack_require__(21);
-	var ReactWheelHandler = __webpack_require__(22);
-	var Scrollbar = __webpack_require__(23);
-	var FixedDataTableBufferedRows = __webpack_require__(24);
-	var FixedDataTableColumnResizeHandle = __webpack_require__(25);
-	var FixedDataTableRow = __webpack_require__(26);
-	var FixedDataTableScrollHelper = __webpack_require__(27);
-	var FixedDataTableWidthHelper = __webpack_require__(28);
+	var FixedDataTableHelper = __webpack_require__(19);
+	var Locale = __webpack_require__(20);
+	var React = __webpack_require__(21);
+	var ReactComponentWithPureRenderMixin = __webpack_require__(22);
+	var ReactWheelHandler = __webpack_require__(23);
+	var Scrollbar = __webpack_require__(24);
+	var FixedDataTableBufferedRows = __webpack_require__(25);
+	var FixedDataTableColumnResizeHandle = __webpack_require__(26);
+	var FixedDataTableRow = __webpack_require__(27);
+	var FixedDataTableScrollHelper = __webpack_require__(28);
+	var FixedDataTableWidthHelper = __webpack_require__(29);
 
-	var cloneWithProps = __webpack_require__(29);
-	var cx = __webpack_require__(30);
-	var debounceCore = __webpack_require__(31);
-	var emptyFunction = __webpack_require__(32);
-	var invariant = __webpack_require__(33);
-	var shallowEqual = __webpack_require__(34);
-	var translateDOMPositionXY = __webpack_require__(35);
+	var cloneWithProps = __webpack_require__(30);
+	var cx = __webpack_require__(31);
+	var debounceCore = __webpack_require__(32);
+	var emptyFunction = __webpack_require__(33);
+	var invariant = __webpack_require__(34);
+	var shallowEqual = __webpack_require__(35);
+	var translateDOMPositionXY = __webpack_require__(36);
 
 	var PropTypes = React.PropTypes;
 	var ReactChildren = React.Children;
@@ -998,6 +998,7 @@ var FixedDataTable =
 	      newColumnGroups[i] = cloneWithProps(
 	        columnGroups[i],
 	        {
+	          cellRenderer: columnGroups[i].props.groupHeaderRenderer || renderToString,
 	          dataKey: i,
 	          children: undefined,
 	          columnData: columnGroups[i].props.columnGroupData,
@@ -1084,6 +1085,14 @@ var FixedDataTable =
 	  _onWheel:function(/*number*/ deltaX, /*number*/ deltaY) {
 	    if (this.isMounted()) {
 	      var x = this.state.scrollX;
+
+	      // JLR: allow use of onWheel property, preventing where appropriate
+	      
+	      if (this.props.onWheel) {
+	        var result = this.props.onWheel(this.state, deltaX, deltaY);
+	        if (!result) return;
+	      }
+
 	      if (Math.abs(deltaY) > Math.abs(deltaX) &&
 	          this.props.overflowY !== 'hidden') {
 	        var scrollState = this._scrollHelper.scrollBy(Math.round(deltaY));
@@ -1200,7 +1209,7 @@ var FixedDataTable =
 	 * @typechecks
 	 */
 
-	var React = __webpack_require__(20);
+	var React = __webpack_require__(21);
 
 	var PropTypes = React.PropTypes;
 
@@ -1357,7 +1366,7 @@ var FixedDataTable =
 	 * @typechecks
 	 */
 
-	var React = __webpack_require__(20);
+	var React = __webpack_require__(21);
 
 	var PropTypes = React.PropTypes;
 
@@ -1421,7 +1430,8 @@ var FixedDataTable =
 
 
 /***/ },
-/* 18 */
+/* 18 */,
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1438,12 +1448,12 @@ var FixedDataTable =
 
 	"use strict";
 
-	var Locale = __webpack_require__(19);
-	var React = __webpack_require__(20);
+	var Locale = __webpack_require__(20);
+	var React = __webpack_require__(21);
 	var FixedDataTableColumnGroup = __webpack_require__(17);
 	var FixedDataTableColumn = __webpack_require__(16);
 
-	var cloneWithProps = __webpack_require__(29);
+	var cloneWithProps = __webpack_require__(30);
 
 	var DIR_SIGN = (Locale.isRTL() ? -1 : +1);
 	// A cell up to 5px outside of the visible area will still be considered visible
@@ -1531,7 +1541,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1557,7 +1567,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1575,7 +1585,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1593,7 +1603,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 22 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1671,7 +1681,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1688,14 +1698,14 @@ var FixedDataTable =
 
 	var DOMMouseMoveTracker = __webpack_require__(38);
 	var Keys = __webpack_require__(39);
-	var React = __webpack_require__(20);
-	var ReactComponentWithPureRenderMixin = __webpack_require__(21);
-	var ReactWheelHandler = __webpack_require__(22);
+	var React = __webpack_require__(21);
+	var ReactComponentWithPureRenderMixin = __webpack_require__(22);
+	var ReactWheelHandler = __webpack_require__(23);
 
 	var cssVar = __webpack_require__(40);
-	var cx = __webpack_require__(30);
-	var emptyFunction = __webpack_require__(32);
-	var translateDOMPositionXY = __webpack_require__(35);
+	var cx = __webpack_require__(31);
+	var emptyFunction = __webpack_require__(33);
+	var translateDOMPositionXY = __webpack_require__(36);
 
 	var PropTypes = React.PropTypes;
 
@@ -2156,7 +2166,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 24 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2171,12 +2181,12 @@ var FixedDataTable =
 	 * @typechecks
 	 */
 
-	var React = __webpack_require__(20);
+	var React = __webpack_require__(21);
 	var FixedDataTableRowBuffer = __webpack_require__(41);
-	var FixedDataTableRow = __webpack_require__(26);
+	var FixedDataTableRow = __webpack_require__(27);
 
-	var cx = __webpack_require__(30);
-	var emptyFunction = __webpack_require__(32);
+	var cx = __webpack_require__(31);
+	var emptyFunction = __webpack_require__(33);
 	var joinClasses = __webpack_require__(42);
 
 	var PropTypes = React.PropTypes;
@@ -2323,7 +2333,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 25 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2343,12 +2353,12 @@ var FixedDataTable =
 	 */
 
 	var DOMMouseMoveTracker = __webpack_require__(38);
-	var Locale = __webpack_require__(19);
-	var React = __webpack_require__(20);
-	var ReactComponentWithPureRenderMixin = __webpack_require__(21);
+	var Locale = __webpack_require__(20);
+	var React = __webpack_require__(21);
+	var ReactComponentWithPureRenderMixin = __webpack_require__(22);
 
 	var clamp = __webpack_require__(43);
-	var cx = __webpack_require__(30);
+	var cx = __webpack_require__(31);
 
 	var PropTypes = React.PropTypes;
 
@@ -2495,7 +2505,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 26 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2512,14 +2522,14 @@ var FixedDataTable =
 
 	"use strict";
 
-	var FixedDataTableHelper = __webpack_require__(18);
-	var React = __webpack_require__(20);
-	var ReactComponentWithPureRenderMixin = __webpack_require__(21);
+	var FixedDataTableHelper = __webpack_require__(19);
+	var React = __webpack_require__(21);
+	var ReactComponentWithPureRenderMixin = __webpack_require__(22);
 	var FixedDataTableCellGroup = __webpack_require__(44);
 
-	var cx = __webpack_require__(30);
+	var cx = __webpack_require__(31);
 	var joinClasses = __webpack_require__(42);
-	var translateDOMPositionXY = __webpack_require__(35);
+	var translateDOMPositionXY = __webpack_require__(36);
 
 	var DIR_SIGN = FixedDataTableHelper.DIR_SIGN;
 	var PropTypes = React.PropTypes;
@@ -2742,7 +2752,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 27 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3012,7 +3022,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 28 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3028,9 +3038,9 @@ var FixedDataTable =
 	 */
 	'use strict';
 
-	var React = __webpack_require__(20);
+	var React = __webpack_require__(21);
 
-	var cloneWithProps = __webpack_require__(29);
+	var cloneWithProps = __webpack_require__(30);
 
 	function getTotalWidth(/*array*/ columns) /*number*/ {
 	  var totalWidth = 0;
@@ -3170,7 +3180,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 29 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3188,7 +3198,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 30 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3246,7 +3256,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 31 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3311,7 +3321,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 32 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3349,7 +3359,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 33 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3408,7 +3418,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 34 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3456,7 +3466,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 35 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
@@ -3511,7 +3521,6 @@ var FixedDataTable =
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 36 */,
 /* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -3769,7 +3778,7 @@ var FixedDataTable =
 	var IntegerBufferSet = __webpack_require__(52);
 
 	var clamp = __webpack_require__(43);
-	var invariant = __webpack_require__(33);
+	var invariant = __webpack_require__(34);
 	var MIN_BUFFER_ROWS = 5;
 	var MAX_BUFFER_ROWS = 15;
 
@@ -4012,15 +4021,15 @@ var FixedDataTable =
 
 	"use strict";
 
-	var FixedDataTableHelper = __webpack_require__(18);
+	var FixedDataTableHelper = __webpack_require__(19);
 	var ImmutableObject = __webpack_require__(53);
-	var React = __webpack_require__(20);
-	var ReactComponentWithPureRenderMixin = __webpack_require__(21);
+	var React = __webpack_require__(21);
+	var ReactComponentWithPureRenderMixin = __webpack_require__(22);
 	var FixedDataTableCell = __webpack_require__(54);
 
-	var cx = __webpack_require__(30);
+	var cx = __webpack_require__(31);
 	var renderToString = FixedDataTableHelper.renderToString;
-	var translateDOMPositionXY = __webpack_require__(35);
+	var translateDOMPositionXY = __webpack_require__(36);
 
 	var PropTypes = React.PropTypes;
 
@@ -4573,7 +4582,7 @@ var FixedDataTable =
 	 * @providesModule requestAnimationFramePolyfill
 	 */
 
-	var emptyFunction = __webpack_require__(32);
+	var emptyFunction = __webpack_require__(33);
 	var nativeRequestAnimationFrame = __webpack_require__(57);
 
 	var lastTime = 0;
@@ -4670,7 +4679,7 @@ var FixedDataTable =
 	var ExecutionEnvironment = __webpack_require__(58);
 
 	var camelize = __webpack_require__(59);
-	var invariant = __webpack_require__(33);
+	var invariant = __webpack_require__(34);
 
 	var memoized = {};
 	var prefixes = ['Webkit', 'ms', 'Moz', 'O'];
@@ -4729,7 +4738,7 @@ var FixedDataTable =
 	 * @typechecks
 	 */
 
-	var emptyFunction = __webpack_require__(32);
+	var emptyFunction = __webpack_require__(33);
 
 	/**
 	 * Upstream version of event listener. Does not take into account specific
@@ -4849,7 +4858,7 @@ var FixedDataTable =
 
 	var Heap = __webpack_require__(62);
 
-	var invariant = __webpack_require__(33);
+	var invariant = __webpack_require__(34);
 
 	// Data structure that allows to store values and assign positions to them
 	// in a way to minimize changing positions of stored values when new ones are
@@ -5037,7 +5046,7 @@ var FixedDataTable =
 
 	var ImmutableValue = __webpack_require__(63);
 
-	var invariant = __webpack_require__(33);
+	var invariant = __webpack_require__(34);
 	var keyOf = __webpack_require__(64);
 	var mergeHelpers = __webpack_require__(65);
 
@@ -5220,10 +5229,10 @@ var FixedDataTable =
 	 */
 
 	var ImmutableObject = __webpack_require__(53);
-	var React = __webpack_require__(20);
+	var React = __webpack_require__(21);
 
-	var cloneWithProps = __webpack_require__(29);
-	var cx = __webpack_require__(30);
+	var cloneWithProps = __webpack_require__(30);
+	var cx = __webpack_require__(31);
 	var joinClasses = __webpack_require__(42);
 
 	var PropTypes = React.PropTypes;
@@ -5915,7 +5924,7 @@ var FixedDataTable =
 
 	"use strict";
 
-	var shallowEqual = __webpack_require__(72);
+	var shallowEqual = __webpack_require__(68);
 
 	/**
 	 * If your React component's render function is "pure", e.g. it will render the
@@ -5969,11 +5978,11 @@ var FixedDataTable =
 
 	"use strict";
 
-	var ReactElement = __webpack_require__(68);
-	var ReactPropTransferer = __webpack_require__(69);
+	var ReactElement = __webpack_require__(69);
+	var ReactPropTransferer = __webpack_require__(70);
 
-	var keyOf = __webpack_require__(70);
-	var warning = __webpack_require__(71);
+	var keyOf = __webpack_require__(71);
+	var warning = __webpack_require__(72);
 
 	var CHILDREN_PROP = keyOf({children: null});
 
@@ -6191,7 +6200,7 @@ var FixedDataTable =
 
 	"use strict";
 
-	var invariant = __webpack_require__(33);
+	var invariant = __webpack_require__(34);
 	var isNode = __webpack_require__(66);
 	var keyOf = __webpack_require__(64);
 
@@ -6365,7 +6374,7 @@ var FixedDataTable =
 
 	"use strict";
 
-	var invariant = __webpack_require__(33);
+	var invariant = __webpack_require__(34);
 	var keyMirror = __webpack_require__(67);
 
 	/**
@@ -6542,7 +6551,7 @@ var FixedDataTable =
 
 	'use strict';
 
-	var invariant = __webpack_require__(33);
+	var invariant = __webpack_require__(34);
 
 	/**
 	 * Constructs an enumeration with keys equal to their value.
@@ -6585,6 +6594,54 @@ var FixedDataTable =
 /* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule shallowEqual
+	 */
+
+	"use strict";
+
+	/**
+	 * Performs equality by iterating through keys on an object and returning
+	 * false when any key has values which are not strictly equal between
+	 * objA and objB. Returns true when the values of all keys are strictly equal.
+	 *
+	 * @return {boolean}
+	 */
+	function shallowEqual(objA, objB) {
+	  if (objA === objB) {
+	    return true;
+	  }
+	  var key;
+	  // Test for A's keys different from B.
+	  for (key in objA) {
+	    if (objA.hasOwnProperty(key) &&
+	        (!objB.hasOwnProperty(key) || objA[key] !== objB[key])) {
+	      return false;
+	    }
+	  }
+	  // Test for B's keys missing from A.
+	  for (key in objB) {
+	    if (objB.hasOwnProperty(key) && !objA.hasOwnProperty(key)) {
+	      return false;
+	    }
+	  }
+	  return true;
+	}
+
+	module.exports = shallowEqual;
+
+
+/***/ },
+/* 69 */
+/***/ function(module, exports, __webpack_require__) {
+
 	/* WEBPACK VAR INJECTION */(function(process) {/**
 	 * Copyright 2014, Facebook, Inc.
 	 * All rights reserved.
@@ -6598,10 +6655,10 @@ var FixedDataTable =
 
 	"use strict";
 
-	var ReactContext = __webpack_require__(74);
-	var ReactCurrentOwner = __webpack_require__(75);
+	var ReactContext = __webpack_require__(78);
+	var ReactCurrentOwner = __webpack_require__(79);
 
-	var warning = __webpack_require__(71);
+	var warning = __webpack_require__(72);
 
 	var RESERVED_PROPS = {
 	  key: true,
@@ -6831,7 +6888,7 @@ var FixedDataTable =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(73)))
 
 /***/ },
-/* 69 */
+/* 70 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
@@ -6847,11 +6904,11 @@ var FixedDataTable =
 
 	"use strict";
 
-	var assign = __webpack_require__(76);
-	var emptyFunction = __webpack_require__(78);
-	var invariant = __webpack_require__(79);
+	var assign = __webpack_require__(74);
+	var emptyFunction = __webpack_require__(75);
+	var invariant = __webpack_require__(76);
 	var joinClasses = __webpack_require__(77);
-	var warning = __webpack_require__(71);
+	var warning = __webpack_require__(72);
 
 	var didWarn = false;
 
@@ -7001,7 +7058,7 @@ var FixedDataTable =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(73)))
 
 /***/ },
-/* 70 */
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -7041,7 +7098,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 71 */
+/* 72 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
@@ -7057,7 +7114,7 @@ var FixedDataTable =
 
 	"use strict";
 
-	var emptyFunction = __webpack_require__(78);
+	var emptyFunction = __webpack_require__(75);
 
 	/**
 	 * Similar to invariant but only logs a warning if the condition is not met.
@@ -7087,54 +7144,6 @@ var FixedDataTable =
 	module.exports = warning;
 	
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(73)))
-
-/***/ },
-/* 72 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * Copyright 2013-2014, Facebook, Inc.
-	 * All rights reserved.
-	 *
-	 * This source code is licensed under the BSD-style license found in the
-	 * LICENSE file in the root directory of this source tree. An additional grant
-	 * of patent rights can be found in the PATENTS file in the same directory.
-	 *
-	 * @providesModule shallowEqual
-	 */
-
-	"use strict";
-
-	/**
-	 * Performs equality by iterating through keys on an object and returning
-	 * false when any key has values which are not strictly equal between
-	 * objA and objB. Returns true when the values of all keys are strictly equal.
-	 *
-	 * @return {boolean}
-	 */
-	function shallowEqual(objA, objB) {
-	  if (objA === objB) {
-	    return true;
-	  }
-	  var key;
-	  // Test for A's keys different from B.
-	  for (key in objA) {
-	    if (objA.hasOwnProperty(key) &&
-	        (!objB.hasOwnProperty(key) || objA[key] !== objB[key])) {
-	      return false;
-	    }
-	  }
-	  // Test for B's keys missing from A.
-	  for (key in objB) {
-	    if (objB.hasOwnProperty(key) && !objA.hasOwnProperty(key)) {
-	      return false;
-	    }
-	  }
-	  return true;
-	}
-
-	module.exports = shallowEqual;
-
 
 /***/ },
 /* 73 */
@@ -7233,110 +7242,6 @@ var FixedDataTable =
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2014, Facebook, Inc.
-	 * All rights reserved.
-	 *
-	 * This source code is licensed under the BSD-style license found in the
-	 * LICENSE file in the root directory of this source tree. An additional grant
-	 * of patent rights can be found in the PATENTS file in the same directory.
-	 *
-	 * @providesModule ReactContext
-	 */
-
-	"use strict";
-
-	var assign = __webpack_require__(76);
-
-	/**
-	 * Keeps track of the current context.
-	 *
-	 * The context is automatically passed down the component ownership hierarchy
-	 * and is accessible via `this.context` on ReactCompositeComponents.
-	 */
-	var ReactContext = {
-
-	  /**
-	   * @internal
-	   * @type {object}
-	   */
-	  current: {},
-
-	  /**
-	   * Temporarily extends the current context while executing scopedCallback.
-	   *
-	   * A typical use case might look like
-	   *
-	   *  render: function() {
-	   *    var children = ReactContext.withContext({foo: 'foo'}, () => (
-	   *
-	   *    ));
-	   *    return <div>{children}</div>;
-	   *  }
-	   *
-	   * @param {object} newContext New context to merge into the existing context
-	   * @param {function} scopedCallback Callback to run with the new context
-	   * @return {ReactComponent|array<ReactComponent>}
-	   */
-	  withContext: function(newContext, scopedCallback) {
-	    var result;
-	    var previousContext = ReactContext.current;
-	    ReactContext.current = assign({}, previousContext, newContext);
-	    try {
-	      result = scopedCallback();
-	    } finally {
-	      ReactContext.current = previousContext;
-	    }
-	    return result;
-	  }
-
-	};
-
-	module.exports = ReactContext;
-
-
-/***/ },
-/* 75 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * Copyright 2013-2014, Facebook, Inc.
-	 * All rights reserved.
-	 *
-	 * This source code is licensed under the BSD-style license found in the
-	 * LICENSE file in the root directory of this source tree. An additional grant
-	 * of patent rights can be found in the PATENTS file in the same directory.
-	 *
-	 * @providesModule ReactCurrentOwner
-	 */
-
-	"use strict";
-
-	/**
-	 * Keeps track of the current owner.
-	 *
-	 * The current owner is the component who should own any components that are
-	 * currently being constructed.
-	 *
-	 * The depth indicate how many composite components are above this render level.
-	 */
-	var ReactCurrentOwner = {
-
-	  /**
-	   * @internal
-	   * @type {ReactComponent}
-	   */
-	  current: null
-
-	};
-
-	module.exports = ReactCurrentOwner;
-
-
-/***/ },
-/* 76 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
 	 * Copyright 2014, Facebook, Inc.
 	 * All rights reserved.
 	 *
@@ -7382,6 +7287,104 @@ var FixedDataTable =
 
 	module.exports = assign;
 
+
+/***/ },
+/* 75 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule emptyFunction
+	 */
+
+	function makeEmptyFunction(arg) {
+	  return function() {
+	    return arg;
+	  };
+	}
+
+	/**
+	 * This function accepts and discards inputs; it has no side effects. This is
+	 * primarily useful idiomatically for overridable function endpoints which
+	 * always need to be callable, since JS lacks a null-call idiom ala Cocoa.
+	 */
+	function emptyFunction() {}
+
+	emptyFunction.thatReturns = makeEmptyFunction;
+	emptyFunction.thatReturnsFalse = makeEmptyFunction(false);
+	emptyFunction.thatReturnsTrue = makeEmptyFunction(true);
+	emptyFunction.thatReturnsNull = makeEmptyFunction(null);
+	emptyFunction.thatReturnsThis = function() { return this; };
+	emptyFunction.thatReturnsArgument = function(arg) { return arg; };
+
+	module.exports = emptyFunction;
+
+
+/***/ },
+/* 76 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(process) {/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule invariant
+	 */
+
+	"use strict";
+
+	/**
+	 * Use invariant() to assert state which your program assumes to be true.
+	 *
+	 * Provide sprintf-style format (only %s is supported) and arguments
+	 * to provide information about what broke and what you were
+	 * expecting.
+	 *
+	 * The invariant message will be stripped in production, but the invariant
+	 * will remain to ensure logic does not differ in production.
+	 */
+
+	var invariant = function(condition, format, a, b, c, d, e, f) {
+	  if ("production" !== process.env.NODE_ENV) {
+	    if (format === undefined) {
+	      throw new Error('invariant requires an error message argument');
+	    }
+	  }
+
+	  if (!condition) {
+	    var error;
+	    if (format === undefined) {
+	      error = new Error(
+	        'Minified exception occurred; use the non-minified dev environment ' +
+	        'for the full error message and additional helpful warnings.'
+	      );
+	    } else {
+	      var args = [a, b, c, d, e, f];
+	      var argIndex = 0;
+	      error = new Error(
+	        'Invariant Violation: ' +
+	        format.replace(/%s/g, function() { return args[argIndex++]; })
+	      );
+	    }
+
+	    error.framesToPop = 1; // we don't care about invariant's own frame
+	    throw error;
+	  }
+	};
+
+	module.exports = invariant;
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(73)))
 
 /***/ },
 /* 77 */
@@ -7440,37 +7443,65 @@ var FixedDataTable =
 	 * LICENSE file in the root directory of this source tree. An additional grant
 	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
-	 * @providesModule emptyFunction
+	 * @providesModule ReactContext
 	 */
 
-	function makeEmptyFunction(arg) {
-	  return function() {
-	    return arg;
-	  };
-	}
+	"use strict";
+
+	var assign = __webpack_require__(74);
 
 	/**
-	 * This function accepts and discards inputs; it has no side effects. This is
-	 * primarily useful idiomatically for overridable function endpoints which
-	 * always need to be callable, since JS lacks a null-call idiom ala Cocoa.
+	 * Keeps track of the current context.
+	 *
+	 * The context is automatically passed down the component ownership hierarchy
+	 * and is accessible via `this.context` on ReactCompositeComponents.
 	 */
-	function emptyFunction() {}
+	var ReactContext = {
 
-	emptyFunction.thatReturns = makeEmptyFunction;
-	emptyFunction.thatReturnsFalse = makeEmptyFunction(false);
-	emptyFunction.thatReturnsTrue = makeEmptyFunction(true);
-	emptyFunction.thatReturnsNull = makeEmptyFunction(null);
-	emptyFunction.thatReturnsThis = function() { return this; };
-	emptyFunction.thatReturnsArgument = function(arg) { return arg; };
+	  /**
+	   * @internal
+	   * @type {object}
+	   */
+	  current: {},
 
-	module.exports = emptyFunction;
+	  /**
+	   * Temporarily extends the current context while executing scopedCallback.
+	   *
+	   * A typical use case might look like
+	   *
+	   *  render: function() {
+	   *    var children = ReactContext.withContext({foo: 'foo'}, () => (
+	   *
+	   *    ));
+	   *    return <div>{children}</div>;
+	   *  }
+	   *
+	   * @param {object} newContext New context to merge into the existing context
+	   * @param {function} scopedCallback Callback to run with the new context
+	   * @return {ReactComponent|array<ReactComponent>}
+	   */
+	  withContext: function(newContext, scopedCallback) {
+	    var result;
+	    var previousContext = ReactContext.current;
+	    ReactContext.current = assign({}, previousContext, newContext);
+	    try {
+	      result = scopedCallback();
+	    } finally {
+	      ReactContext.current = previousContext;
+	    }
+	    return result;
+	  }
+
+	};
+
+	module.exports = ReactContext;
 
 
 /***/ },
 /* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(process) {/**
+	/**
 	 * Copyright 2013-2014, Facebook, Inc.
 	 * All rights reserved.
 	 *
@@ -7478,53 +7509,31 @@ var FixedDataTable =
 	 * LICENSE file in the root directory of this source tree. An additional grant
 	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
-	 * @providesModule invariant
+	 * @providesModule ReactCurrentOwner
 	 */
 
 	"use strict";
 
 	/**
-	 * Use invariant() to assert state which your program assumes to be true.
+	 * Keeps track of the current owner.
 	 *
-	 * Provide sprintf-style format (only %s is supported) and arguments
-	 * to provide information about what broke and what you were
-	 * expecting.
+	 * The current owner is the component who should own any components that are
+	 * currently being constructed.
 	 *
-	 * The invariant message will be stripped in production, but the invariant
-	 * will remain to ensure logic does not differ in production.
+	 * The depth indicate how many composite components are above this render level.
 	 */
+	var ReactCurrentOwner = {
 
-	var invariant = function(condition, format, a, b, c, d, e, f) {
-	  if ("production" !== process.env.NODE_ENV) {
-	    if (format === undefined) {
-	      throw new Error('invariant requires an error message argument');
-	    }
-	  }
+	  /**
+	   * @internal
+	   * @type {ReactComponent}
+	   */
+	  current: null
 
-	  if (!condition) {
-	    var error;
-	    if (format === undefined) {
-	      error = new Error(
-	        'Minified exception occurred; use the non-minified dev environment ' +
-	        'for the full error message and additional helpful warnings.'
-	      );
-	    } else {
-	      var args = [a, b, c, d, e, f];
-	      var argIndex = 0;
-	      error = new Error(
-	        'Invariant Violation: ' +
-	        format.replace(/%s/g, function() { return args[argIndex++]; })
-	      );
-	    }
-
-	    error.framesToPop = 1; // we don't care about invariant's own frame
-	    throw error;
-	  }
 	};
 
-	module.exports = invariant;
-	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(73)))
+	module.exports = ReactCurrentOwner;
+
 
 /***/ }
 /******/ ])
