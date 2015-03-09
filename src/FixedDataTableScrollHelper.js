@@ -21,7 +21,8 @@ class FixedDataTableScrollHelper {
     /*number*/ rowCount,
     /*number*/ defaultRowHeight,
     /*number*/ viewportHeight,
-    /*?function*/ rowHeightGetter
+    /*?function*/ rowHeightGetter,
+    /*?function*/ bufferSpace
   ) {
     this._rowOffsets = new PrefixIntervalTree(rowCount, defaultRowHeight);
     this._storedHeights = new Array(rowCount);
@@ -30,7 +31,8 @@ class FixedDataTableScrollHelper {
     }
     this._rowCount = rowCount;
     this._position = 0;
-    this._contentHeight = rowCount * defaultRowHeight;
+    this._bufferSpace = bufferSpace;
+    this._contentHeight = rowCount * defaultRowHeight + bufferSpace;
     this._defaultRowHeight = defaultRowHeight;
     this._rowHeightGetter = rowHeightGetter ?
       rowHeightGetter :
@@ -150,11 +152,14 @@ class FixedDataTableScrollHelper {
     var maxPosition = this._contentHeight - this._viewportHeight;
     position = clamp(0, position, maxPosition);
     this._position = position;
-    var firstVisibleRow = this._rowOffsets.upperBound(position);
-    var firstRowIndex = firstVisibleRow.index;
-    firstRowPosition =
+
+    var initPos = Math.max(position - this._bufferSpace, 0)
+
+    var firstVisibleRow = this._rowOffsets.upperBound(initPos);
+    var firstRowIndex = Math.max(firstVisibleRow.index, 0);
+    var firstRowPosition =
       firstVisibleRow.value - this._rowHeightGetter(firstRowIndex);
-    var firstRowOffset = firstRowPosition - position;
+    var firstRowOffset = firstRowPosition - initPos;
 
     this._updateHeightsInViewport(firstRowIndex, firstRowOffset);
     this._updateHeightsAboveViewport(firstRowIndex);
@@ -209,11 +214,13 @@ class FixedDataTableScrollHelper {
     }
     this._position = position;
 
-    var firstVisibleRow = this._rowOffsets.upperBound(position);
+    var initPos = Math.max(position - this._bufferSpace, 0)
+
+    var firstVisibleRow = this._rowOffsets.upperBound(initPos);
     var firstRowIndex = Math.max(firstVisibleRow.index, 0);
     var firstRowPosition =
       firstVisibleRow.value - this._rowHeightGetter(firstRowIndex);
-    var firstRowOffset = firstRowPosition - position;
+    var firstRowOffset = firstRowPosition - initPos;
 
     this._updateHeightsInViewport(firstRowIndex, firstRowOffset);
     this._updateHeightsAboveViewport(firstRowIndex);
