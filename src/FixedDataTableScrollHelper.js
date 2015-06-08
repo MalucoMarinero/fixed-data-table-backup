@@ -150,7 +150,7 @@ class FixedDataTableScrollHelper {
     }
 
     var maxPosition = this._contentHeight - this._viewportHeight;
-    position = clamp(0, position, maxPosition);
+    position = clamp(0, position, Math.max(maxPosition - this._bufferSpace, 0));
     this._position = position;
 
     var initPos = Math.max(position - this._bufferSpace, 0)

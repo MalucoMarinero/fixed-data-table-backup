@@ -272,13 +272,17 @@ var FixedDataTable = React.createClass({
       props.rowHeight,
       viewportHeight,
       props.rowHeightGetter,
-      props.groupHeaderScrollsOut ? props.groupHeaderHeight : 0
+      props.groupHeaderScrollsOut
+        ? props.groupHeaderHeight - (props.groupHeaderMinimumScrollOut || 0)
+        : 0
     );
     if (props.scrollTop) {
       this._scrollHelper.scrollTo(props.scrollTop);
     }
     this._didScrollStop = debounceCore(this._didScrollStop, 160, this);
-    this.tScroller = new Scroller(this._handleTouchScroll);
+    if (props.handleTouch) {
+      this.tScroller = new Scroller(this._handleTouchScroll);
+    }
 
     return this._calculateState(this.props);
   },
@@ -335,6 +339,7 @@ var FixedDataTable = React.createClass({
 
   componentDidMount() {
     this._reportContentHeight();
+    this._onScroll();
   },
 
   componentWillReceiveProps(/*object*/ nextProps) {
@@ -379,7 +384,7 @@ var FixedDataTable = React.createClass({
           width={state.width}
           height={state.groupHeaderHeight}
           index={0}
-          zIndex={1}
+          zIndex={2}
           offsetTop={0}
           scrollLeft={state.scrollX}
           fixedColumns={state.groupHeaderFixedColumns}
@@ -432,6 +437,8 @@ var FixedDataTable = React.createClass({
           position={state.scrollX}
           size={scrollbarXWidth}
         />;
+    } else {
+      footoffsetTop =- Scrollbar.SIZE;
     }
 
     var dragKnob =
@@ -458,7 +465,7 @@ var FixedDataTable = React.createClass({
           fixedColumns={state.footFixedColumns}
           height={state.footerHeight}
           index={-1}
-          zIndex={1}
+          zIndex={2}
           offsetTop={footOffsetTop}
           scrollableColumns={state.footScrollableColumns}
           scrollLeft={state.scrollX}
@@ -476,7 +483,7 @@ var FixedDataTable = React.createClass({
         width={state.width}
         height={state.headerHeight}
         index={-1}
-        zIndex={1}
+        zIndex={2}
         offsetTop={headerOffsetTop}
         scrollLeft={state.scrollX}
         fixedColumns={state.headFixedColumns}
@@ -497,9 +504,9 @@ var FixedDataTable = React.createClass({
       <div
         className={cx('public/fixedDataTable/main')}
         onWheel={this._wheelHandler.onWheel}
-        onTouchStart={this._handleTouchStart}
-        onTouchMove={this._handleTouchMove}
-        onTouchEnd={this._handleTouchEnd}
+        onTouchStart={props.handleTouch ? this._handleTouchStart : null}
+        onTouchMove={props.handleTouch ? this._handleTouchMove : null}
+        onTouchEnd={props.handleTouch ? this._handleTouchEnd : null}
         style={{height: state.height, width: state.width}}>
         <div
           className={cx('fixedDataTable/rowsContainer')}
@@ -642,7 +649,7 @@ var FixedDataTable = React.createClass({
     }
 
     if (oldState && props.rowsCount !== oldState.rowsCount) {
-      // Number of rows changed, try to scroll to the row from before the
+      // Number of rows changed, try to scroll to the position from before the
       // change
       var viewportHeight = props.height -
         props.headerHeight -
@@ -653,10 +660,11 @@ var FixedDataTable = React.createClass({
         props.rowHeight,
         viewportHeight,
         props.rowHeightGetter,
-        props.groupHeaderScrollsOut ? props.groupHeaderHeight : 0
+        props.groupHeaderScrollsOut
+          ? props.groupHeaderHeight - (props.groupHeaderMinimumScrollOut || 0)
+          : 0
       );
-      var scrollState =
-        this._scrollHelper.scrollToRow(firstRowIndex, firstRowOffset);
+      var scrollState = this._scrollHelper.scrollTo(scrollY);
       firstRowIndex = scrollState.index;
       firstRowOffset = scrollState.offset;
       scrollY = scrollState.position;
@@ -780,12 +788,15 @@ var FixedDataTable = React.createClass({
     scrollX = Math.min(scrollX, maxScrollX);
     scrollY = Math.min(scrollY, maxScrollY);
 
-    this.tScroller.setDimensions(
-      props.width,
-      bodyHeight,
-      scrollContentWidth,
-      scrollContentHeight
-    );
+    if (props.handleTouch) {
+      this.tScroller.setDimensions(
+        props.width,
+        bodyHeight,
+        scrollContentWidth,
+        scrollContentHeight
+      );
+      this.tScroller.scrollTo(scrollX, scrollY);
+    }
 
     if (!maxScrollY) {
       // no vertical scrollbar necessary, use the totals we tracked so we
@@ -802,7 +813,8 @@ var FixedDataTable = React.createClass({
 
     // autohiding that shizz
     var groupHeaderHeight = props.groupHeaderScrollsOut
-      ? Math.max(props.groupHeaderHeight - scrollY, 0)
+      ? Math.max(props.groupHeaderHeight - scrollY,
+                 props.groupHeaderMinimumScrollOut || 0)
       : props.groupHeaderHeight;
 
     // The order of elements in this object metters and bringing bodyHeight,
@@ -973,7 +985,10 @@ var FixedDataTable = React.createClass({
     var bodyHeight = height - totalHeightReserved;
 
     if (props.groupHeaderScrollsOut) {
-      return bodyHeight - Math.max(props.groupHeaderHeight - scrollY, 0);
+      return bodyHeight - Math.max(
+        props.groupHeaderHeight - scrollY,
+        this.props.groupHeaderMinimumScrollOut || 0
+      );
     } else {
       return bodyHeight - props.groupHeaderHeight;
     }
@@ -982,13 +997,6 @@ var FixedDataTable = React.createClass({
   _onWheel(/*number*/ deltaX, /*number*/ deltaY) {
     if (this.isMounted()) {
       var x = this.state.scrollX;
-
-      // JLR: allow use of onWheel property, preventing where appropriate
-      
-      if (this.props.onWheel) {
-        var result = this.props.onWheel(this.state, deltaX, deltaY);
-        if (!result) return;
-      }
 
       if (Math.abs(deltaY) > Math.abs(deltaX) &&
           this.props.overflowY !== 'hidden') {
@@ -999,17 +1007,18 @@ var FixedDataTable = React.createClass({
           scrollY: scrollState.position,
           bodyHeight: this._getHeaderScrollHeight(scrollState.position),
           groupHeaderHeight: this.props.groupHeaderScrollsOut
-            ? Math.max(this.props.groupHeaderHeight - scrollState.position, 0)
+            ? Math.max(this.props.groupHeaderHeight - scrollState.position,
+                       this.props.groupHeaderMinimumScrollOut || 0)
             : this.props.groupHeaderHeight,
           scrollContentHeight: scrollState.contentHeight,
-        });
+        }, this._onScroll);
       } else if (deltaX && this.props.overflowX !== 'hidden') {
         x += deltaX;
         x = x < 0 ? 0 : x;
         x = x > this.state.maxScrollX ? this.state.maxScrollX : x;
         this.setState({
           scrollX: x,
-        });
+        }, this._onScroll);
       }
 
       this._didScrollStop();
@@ -1019,21 +1028,15 @@ var FixedDataTable = React.createClass({
 
   _onHorizontalScroll(/*number*/ scrollPos) {
     if (this.isMounted() && scrollPos !== this.state.scrollX) {
-      var result = this._doingScroll(scrollPos, this.state.scrollY);
-      if (!result) return;
-
       this.setState({
         scrollX: scrollPos,
-      });
+      }, this._onScroll);
       this._didScrollStop();
     }
   },
 
   _onVerticalScroll(/*number*/ scrollPos) {
     if (this.isMounted() && scrollPos !== this.state.scrollY) {
-      var result = this._doingScroll(this.state.scrollX, scrollPos);
-      if (!result) return;
-
       var scrollState = this._scrollHelper.scrollTo(Math.round(scrollPos));
       this.setState({
         firstRowIndex: scrollState.index,
@@ -1042,9 +1045,10 @@ var FixedDataTable = React.createClass({
         scrollContentHeight: scrollState.contentHeight,
         bodyHeight: this._getHeaderScrollHeight(scrollState.position),
         groupHeaderHeight: this.props.groupHeaderScrollsOut
-          ? Math.max(this.props.groupHeaderHeight - scrollState.position, 0)
+          ? Math.max(this.props.groupHeaderHeight - scrollState.position,
+                     this.props.groupHeaderMinimumScrollOut || 0)
           : this.props.groupHeaderHeight,
-      });
+      }, this._onScroll);
       this._didScrollStop();
     }
   },
@@ -1064,20 +1068,21 @@ var FixedDataTable = React.createClass({
         scrollContentHeight: scrollState.contentHeight,
         bodyHeight: this._getHeaderScrollHeight(scrollState.position),
         groupHeaderHeight: this.props.groupHeaderScrollsOut
-          ? Math.max(this.props.groupHeaderHeight - scrollState.position, 0)
+          ? Math.max(this.props.groupHeaderHeight - scrollState.position,
+                     this.props.groupHeaderMinimumScrollOut || 0)
           : this.props.groupHeaderHeight,
       });
     }
+    this._didScrollStop();
   },
 
 
-  _doingScroll(/*number*/scrollX, /*number*/scrollY) {
+  _onScroll() {
     if (this.isMounted()) {
       if (this.props.onScroll) {
-        return this.props.onScroll(scrollX, scrollY);
+        this.props.onScroll(this.state.scrollX, this.state.scrollY);
       }
     }
-    return true;
   },
 
   _didScrollStop() {

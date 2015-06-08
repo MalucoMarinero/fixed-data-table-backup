@@ -422,18 +422,25 @@ var FixedDataTable =
 	    var props = this.props;
 	    var viewportHeight = props.height -
 	      props.headerHeight -
-	      props.footerHeight -
-	      props.groupHeaderHeight;
+	      props.groupHeaderHeight -
+	      props.footerHeight;
+
 	    this._scrollHelper = new FixedDataTableScrollHelper(
 	      props.rowsCount,
 	      props.rowHeight,
 	      viewportHeight,
-	      props.rowHeightGetter
+	      props.rowHeightGetter,
+	      props.groupHeaderScrollsOut
+	        ? props.groupHeaderHeight - (props.groupHeaderMinimumScrollOut || 0)
+	        : 0
 	    );
 	    if (props.scrollTop) {
 	      this._scrollHelper.scrollTo(props.scrollTop);
 	    }
 	    this._didScrollStop = debounceCore(this._didScrollStop, 160, this);
+	    if (props.handleTouch) {
+	      this.tScroller = new Scroller(this._handleTouchScroll);
+	    }
 
 	    return this._calculateState(this.props);
 	  },
@@ -452,6 +459,22 @@ var FixedDataTable =
 	      this.props.overflowX !== 'hidden', // Should handle horizontal scroll
 	      this.props.overflowY !== 'hidden' // Should handle vertical scroll
 	    );
+
+	  },
+
+	  _handleTouchStart:function(e) {
+	    this.tScroller.doTouchStart(e.touches, e.timeStamp)
+	    e.preventDefault()
+	  },
+
+	  _handleTouchMove:function(e) {
+	    this.tScroller.doTouchMove(e.touches, e.timeStamp, e.scale)
+	    e.preventDefault()
+	  },
+
+	  _handleTouchEnd:function(e) {
+	    this.tScroller.doTouchEnd(e.timeStamp)
+	    e.preventDefault()
 	  },
 
 	  _reportContentHeight:function() {
@@ -474,6 +497,7 @@ var FixedDataTable =
 
 	  componentDidMount:function() {
 	    this._reportContentHeight();
+	    this._onScroll();
 	  },
 
 	  componentWillReceiveProps:function(/*object*/ nextProps) {
@@ -518,7 +542,7 @@ var FixedDataTable =
 	          width: state.width, 
 	          height: state.groupHeaderHeight, 
 	          index: 0, 
-	          zIndex: 1, 
+	          zIndex: 2, 
 	          offsetTop: 0, 
 	          scrollLeft: state.scrollX, 
 	          fixedColumns: state.groupHeaderFixedColumns, 
@@ -571,6 +595,8 @@ var FixedDataTable =
 	          position: state.scrollX, 
 	          size: scrollbarXWidth}
 	        );
+	    } else {
+	      footoffsetTop =- Scrollbar.SIZE;
 	    }
 
 	    var dragKnob =
@@ -597,7 +623,7 @@ var FixedDataTable =
 	          fixedColumns: state.footFixedColumns, 
 	          height: state.footerHeight, 
 	          index: -1, 
-	          zIndex: 1, 
+	          zIndex: 2, 
 	          offsetTop: footOffsetTop, 
 	          scrollableColumns: state.footScrollableColumns, 
 	          scrollLeft: state.scrollX, 
@@ -615,7 +641,7 @@ var FixedDataTable =
 	        width: state.width, 
 	        height: state.headerHeight, 
 	        index: -1, 
-	        zIndex: 1, 
+	        zIndex: 2, 
 	        offsetTop: headerOffsetTop, 
 	        scrollLeft: state.scrollX, 
 	        fixedColumns: state.headFixedColumns, 
@@ -636,6 +662,9 @@ var FixedDataTable =
 	      React.createElement("div", {
 	        className: cx('public/fixedDataTable/main'), 
 	        onWheel: this._wheelHandler.onWheel, 
+	        onTouchStart: props.handleTouch ? this._handleTouchStart : null, 
+	        onTouchMove: props.handleTouch ? this._handleTouchMove : null, 
+	        onTouchEnd: props.handleTouch ? this._handleTouchEnd : null, 
 	        style: {height: state.height, width: state.width}}, 
 	        React.createElement("div", {
 	          className: cx('fixedDataTable/rowsContainer'), 
@@ -778,7 +807,7 @@ var FixedDataTable =
 	    }
 
 	    if (oldState && props.rowsCount !== oldState.rowsCount) {
-	      // Number of rows changed, try to scroll to the row from before the
+	      // Number of rows changed, try to scroll to the position from before the
 	      // change
 	      var viewportHeight = props.height -
 	        props.headerHeight -
@@ -788,16 +817,19 @@ var FixedDataTable =
 	        props.rowsCount,
 	        props.rowHeight,
 	        viewportHeight,
-	        props.rowHeightGetter
+	        props.rowHeightGetter,
+	        props.groupHeaderScrollsOut
+	          ? props.groupHeaderHeight - (props.groupHeaderMinimumScrollOut || 0)
+	          : 0
 	      );
-	      var scrollState =
-	        this._scrollHelper.scrollToRow(firstRowIndex, firstRowOffset);
+	      var scrollState = this._scrollHelper.scrollTo(scrollY);
 	      firstRowIndex = scrollState.index;
 	      firstRowOffset = scrollState.offset;
 	      scrollY = scrollState.position;
 	    } else if (oldState && props.rowHeightGetter !== oldState.rowHeightGetter) {
 	      this._scrollHelper.setRowHeightGetter(props.rowHeightGetter);
 	    }
+
 
 	    var columnResizingData;
 	    if (props.isColumnResizing) {
@@ -899,6 +931,7 @@ var FixedDataTable =
 	    var scrollContentWidth =
 	      FixedDataTableWidthHelper.getTotalWidth(columns);
 
+
 	    var horizontalScrollbarVisible = scrollContentWidth > props.width &&
 	      props.overflowX !== 'hidden';
 
@@ -913,6 +946,16 @@ var FixedDataTable =
 	    scrollX = Math.min(scrollX, maxScrollX);
 	    scrollY = Math.min(scrollY, maxScrollY);
 
+	    if (props.handleTouch) {
+	      this.tScroller.setDimensions(
+	        props.width,
+	        bodyHeight,
+	        scrollContentWidth,
+	        scrollContentHeight
+	      );
+	      this.tScroller.scrollTo(scrollX, scrollY);
+	    }
+
 	    if (!maxScrollY) {
 	      // no vertical scrollbar necessary, use the totals we tracked so we
 	      // can shrink-to-fit vertically
@@ -923,6 +966,14 @@ var FixedDataTable =
 	    }
 
 	    this._scrollHelper.setViewportHeight(bodyHeight);
+
+	    bodyHeight = this._getHeaderScrollHeight(scrollY);
+
+	    // autohiding that shizz
+	    var groupHeaderHeight = props.groupHeaderScrollsOut
+	      ? Math.max(props.groupHeaderHeight - scrollY,
+	                 props.groupHeaderMinimumScrollOut || 0)
+	      : props.groupHeaderHeight;
 
 	    // The order of elements in this object metters and bringing bodyHeight,
 	    // height or useGroupHeader to the top can break various features
@@ -948,8 +999,10 @@ var FixedDataTable =
 	      // columnInfo and props
 	      bodyHeight:bodyHeight,
 	      height:height,
-	      useGroupHeader:useGroupHeader
+	      useGroupHeader:useGroupHeader,
+	      groupHeaderHeight:groupHeaderHeight
 	    });
+
 
 	    // Both `headData` and `groupHeaderData` are generated by
 	    // `FixedDataTable` will be passed to each header cell to render.
@@ -1082,16 +1135,26 @@ var FixedDataTable =
 	    };
 	  },
 
+	  _getHeaderScrollHeight:function(scrollY) {
+	    var props = this.props;
+	    var useMaxHeight = props.height === undefined;
+	    var height = useMaxHeight ? props.maxHeight : props.height;
+	    var totalHeightReserved = props.footerHeight + props.headerHeight;
+	    var bodyHeight = height - totalHeightReserved;
+
+	    if (props.groupHeaderScrollsOut) {
+	      return bodyHeight - Math.max(
+	        props.groupHeaderHeight - scrollY,
+	        this.props.groupHeaderMinimumScrollOut || 0
+	      );
+	    } else {
+	      return bodyHeight - props.groupHeaderHeight;
+	    }
+	  },
+
 	  _onWheel:function(/*number*/ deltaX, /*number*/ deltaY) {
 	    if (this.isMounted()) {
 	      var x = this.state.scrollX;
-
-	      // JLR: allow use of onWheel property, preventing where appropriate
-	      
-	      if (this.props.onWheel) {
-	        var result = this.props.onWheel(this.state, deltaX, deltaY);
-	        if (!result) return;
-	      }
 
 	      if (Math.abs(deltaY) > Math.abs(deltaX) &&
 	          this.props.overflowY !== 'hidden') {
@@ -1100,15 +1163,20 @@ var FixedDataTable =
 	          firstRowIndex: scrollState.index,
 	          firstRowOffset: scrollState.offset,
 	          scrollY: scrollState.position,
+	          bodyHeight: this._getHeaderScrollHeight(scrollState.position),
+	          groupHeaderHeight: this.props.groupHeaderScrollsOut
+	            ? Math.max(this.props.groupHeaderHeight - scrollState.position,
+	                       this.props.groupHeaderMinimumScrollOut || 0)
+	            : this.props.groupHeaderHeight,
 	          scrollContentHeight: scrollState.contentHeight,
-	        });
+	        }, this._onScroll);
 	      } else if (deltaX && this.props.overflowX !== 'hidden') {
 	        x += deltaX;
 	        x = x < 0 ? 0 : x;
 	        x = x > this.state.maxScrollX ? this.state.maxScrollX : x;
 	        this.setState({
 	          scrollX: x,
-	        });
+	        }, this._onScroll);
 	      }
 
 	      this._didScrollStop();
@@ -1120,7 +1188,7 @@ var FixedDataTable =
 	    if (this.isMounted() && scrollPos !== this.state.scrollX) {
 	      this.setState({
 	        scrollX: scrollPos,
-	      });
+	      }, this._onScroll);
 	      this._didScrollStop();
 	    }
 	  },
@@ -1133,8 +1201,45 @@ var FixedDataTable =
 	        firstRowOffset: scrollState.offset,
 	        scrollY: scrollState.position,
 	        scrollContentHeight: scrollState.contentHeight,
-	      });
+	        bodyHeight: this._getHeaderScrollHeight(scrollState.position),
+	        groupHeaderHeight: this.props.groupHeaderScrollsOut
+	          ? Math.max(this.props.groupHeaderHeight - scrollState.position,
+	                     this.props.groupHeaderMinimumScrollOut || 0)
+	          : this.props.groupHeaderHeight,
+	      }, this._onScroll);
 	      this._didScrollStop();
+	    }
+	  },
+
+	  _handleTouchScroll:function(scrollX, scrollY) {
+	    if (this.isMounted() && scrollX !== this.state.scrollX) {
+	      this.setState({
+	        scrollX: scrollX,
+	      });
+	    }
+	    if (this.isMounted() && scrollY !== this.state.scrollY) {
+	      var scrollState = this._scrollHelper.scrollTo(Math.round(scrollY));
+	      this.setState({
+	        firstRowIndex: scrollState.index,
+	        firstRowOffset: scrollState.offset,
+	        scrollY: scrollState.position,
+	        scrollContentHeight: scrollState.contentHeight,
+	        bodyHeight: this._getHeaderScrollHeight(scrollState.position),
+	        groupHeaderHeight: this.props.groupHeaderScrollsOut
+	          ? Math.max(this.props.groupHeaderHeight - scrollState.position,
+	                     this.props.groupHeaderMinimumScrollOut || 0)
+	          : this.props.groupHeaderHeight,
+	      });
+	    }
+	    this._didScrollStop();
+	  },
+
+
+	  _onScroll:function() {
+	    if (this.isMounted()) {
+	      if (this.props.onScroll) {
+	        this.props.onScroll(this.state.scrollX, this.state.scrollY);
+	      }
 	    }
 	  },
 
@@ -2626,7 +2731,7 @@ var FixedDataTable =
 	        key: "fixed_cells", 
 	        height: this.props.height, 
 	        left: 0, 
-	        zIndex: 2, 
+	        zIndex: this.props.scrollLeft ? 2 : 0, 
 	        columns: this.props.fixedColumns, 
 	        data: this.props.data, 
 	        onColumnResize: this.props.onColumnResize, 
@@ -2778,7 +2883,8 @@ var FixedDataTable =
 	rowCount,
 	    /*number*/ defaultRowHeight,
 	    /*number*/ viewportHeight,
-	    /*?function*/ rowHeightGetter)
+	    /*?function*/ rowHeightGetter,
+	    /*?function*/ bufferSpace)
 	   {
 	    this.$FixedDataTableScrollHelper_rowOffsets = new PrefixIntervalTree(rowCount, defaultRowHeight);
 	    this.$FixedDataTableScrollHelper_storedHeights = new Array(rowCount);
@@ -2787,7 +2893,8 @@ var FixedDataTable =
 	    }
 	    this.$FixedDataTableScrollHelper_rowCount = rowCount;
 	    this.$FixedDataTableScrollHelper_position = 0;
-	    this.$FixedDataTableScrollHelper_contentHeight = rowCount * defaultRowHeight;
+	    this.$FixedDataTableScrollHelper_bufferSpace = bufferSpace;
+	    this.$FixedDataTableScrollHelper_contentHeight = rowCount * defaultRowHeight + bufferSpace;
 	    this.$FixedDataTableScrollHelper_defaultRowHeight = defaultRowHeight;
 	    this.$FixedDataTableScrollHelper_rowHeightGetter = rowHeightGetter ?
 	      rowHeightGetter :
@@ -2905,13 +3012,16 @@ var FixedDataTable =
 	    }
 
 	    var maxPosition = this.$FixedDataTableScrollHelper_contentHeight - this.$FixedDataTableScrollHelper_viewportHeight;
-	    position = clamp(0, position, maxPosition);
+	    position = clamp(0, position, Math.max(maxPosition - this.$FixedDataTableScrollHelper_bufferSpace, 0));
 	    this.$FixedDataTableScrollHelper_position = position;
-	    var firstVisibleRow = this.$FixedDataTableScrollHelper_rowOffsets.upperBound(position);
-	    var firstRowIndex = firstVisibleRow.index;
-	    firstRowPosition =
+
+	    var initPos = Math.max(position - this.$FixedDataTableScrollHelper_bufferSpace, 0)
+
+	    var firstVisibleRow = this.$FixedDataTableScrollHelper_rowOffsets.upperBound(initPos);
+	    var firstRowIndex = Math.max(firstVisibleRow.index, 0);
+	    var firstRowPosition =
 	      firstVisibleRow.value - this.$FixedDataTableScrollHelper_rowHeightGetter(firstRowIndex);
-	    var firstRowOffset = firstRowPosition - position;
+	    var firstRowOffset = firstRowPosition - initPos;
 
 	    this.$FixedDataTableScrollHelper_updateHeightsInViewport(firstRowIndex, firstRowOffset);
 	    this.$FixedDataTableScrollHelper_updateHeightsAboveViewport(firstRowIndex);
@@ -2966,11 +3076,13 @@ var FixedDataTable =
 	    }
 	    this.$FixedDataTableScrollHelper_position = position;
 
-	    var firstVisibleRow = this.$FixedDataTableScrollHelper_rowOffsets.upperBound(position);
+	    var initPos = Math.max(position - this.$FixedDataTableScrollHelper_bufferSpace, 0)
+
+	    var firstVisibleRow = this.$FixedDataTableScrollHelper_rowOffsets.upperBound(initPos);
 	    var firstRowIndex = Math.max(firstVisibleRow.index, 0);
 	    var firstRowPosition =
 	      firstVisibleRow.value - this.$FixedDataTableScrollHelper_rowHeightGetter(firstRowIndex);
-	    var firstRowOffset = firstRowPosition - position;
+	    var firstRowOffset = firstRowPosition - initPos;
 
 	    this.$FixedDataTableScrollHelper_updateHeightsInViewport(firstRowIndex, firstRowOffset);
 	    this.$FixedDataTableScrollHelper_updateHeightsAboveViewport(firstRowIndex);
@@ -6655,8 +6767,8 @@ var FixedDataTable =
 
 	"use strict";
 
-	var ReactContext = __webpack_require__(78);
-	var ReactCurrentOwner = __webpack_require__(79);
+	var ReactContext = __webpack_require__(74);
+	var ReactCurrentOwner = __webpack_require__(75);
 
 	var warning = __webpack_require__(72);
 
@@ -6904,10 +7016,10 @@ var FixedDataTable =
 
 	"use strict";
 
-	var assign = __webpack_require__(74);
-	var emptyFunction = __webpack_require__(75);
-	var invariant = __webpack_require__(76);
-	var joinClasses = __webpack_require__(77);
+	var assign = __webpack_require__(76);
+	var emptyFunction = __webpack_require__(77);
+	var invariant = __webpack_require__(78);
+	var joinClasses = __webpack_require__(79);
 	var warning = __webpack_require__(72);
 
 	var didWarn = false;
@@ -7114,7 +7226,7 @@ var FixedDataTable =
 
 	"use strict";
 
-	var emptyFunction = __webpack_require__(75);
+	var emptyFunction = __webpack_require__(77);
 
 	/**
 	 * Similar to invariant but only logs a warning if the condition is not met.
@@ -7242,6 +7354,110 @@ var FixedDataTable =
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule ReactContext
+	 */
+
+	"use strict";
+
+	var assign = __webpack_require__(76);
+
+	/**
+	 * Keeps track of the current context.
+	 *
+	 * The context is automatically passed down the component ownership hierarchy
+	 * and is accessible via `this.context` on ReactCompositeComponents.
+	 */
+	var ReactContext = {
+
+	  /**
+	   * @internal
+	   * @type {object}
+	   */
+	  current: {},
+
+	  /**
+	   * Temporarily extends the current context while executing scopedCallback.
+	   *
+	   * A typical use case might look like
+	   *
+	   *  render: function() {
+	   *    var children = ReactContext.withContext({foo: 'foo'}, () => (
+	   *
+	   *    ));
+	   *    return <div>{children}</div>;
+	   *  }
+	   *
+	   * @param {object} newContext New context to merge into the existing context
+	   * @param {function} scopedCallback Callback to run with the new context
+	   * @return {ReactComponent|array<ReactComponent>}
+	   */
+	  withContext: function(newContext, scopedCallback) {
+	    var result;
+	    var previousContext = ReactContext.current;
+	    ReactContext.current = assign({}, previousContext, newContext);
+	    try {
+	      result = scopedCallback();
+	    } finally {
+	      ReactContext.current = previousContext;
+	    }
+	    return result;
+	  }
+
+	};
+
+	module.exports = ReactContext;
+
+
+/***/ },
+/* 75 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule ReactCurrentOwner
+	 */
+
+	"use strict";
+
+	/**
+	 * Keeps track of the current owner.
+	 *
+	 * The current owner is the component who should own any components that are
+	 * currently being constructed.
+	 *
+	 * The depth indicate how many composite components are above this render level.
+	 */
+	var ReactCurrentOwner = {
+
+	  /**
+	   * @internal
+	   * @type {ReactComponent}
+	   */
+	  current: null
+
+	};
+
+	module.exports = ReactCurrentOwner;
+
+
+/***/ },
+/* 76 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
 	 * Copyright 2014, Facebook, Inc.
 	 * All rights reserved.
 	 *
@@ -7289,7 +7505,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 75 */
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -7327,7 +7543,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 76 */
+/* 78 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
@@ -7387,7 +7603,7 @@ var FixedDataTable =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(73)))
 
 /***/ },
-/* 77 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -7429,110 +7645,6 @@ var FixedDataTable =
 	}
 
 	module.exports = joinClasses;
-
-
-/***/ },
-/* 78 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * Copyright 2013-2014, Facebook, Inc.
-	 * All rights reserved.
-	 *
-	 * This source code is licensed under the BSD-style license found in the
-	 * LICENSE file in the root directory of this source tree. An additional grant
-	 * of patent rights can be found in the PATENTS file in the same directory.
-	 *
-	 * @providesModule ReactContext
-	 */
-
-	"use strict";
-
-	var assign = __webpack_require__(74);
-
-	/**
-	 * Keeps track of the current context.
-	 *
-	 * The context is automatically passed down the component ownership hierarchy
-	 * and is accessible via `this.context` on ReactCompositeComponents.
-	 */
-	var ReactContext = {
-
-	  /**
-	   * @internal
-	   * @type {object}
-	   */
-	  current: {},
-
-	  /**
-	   * Temporarily extends the current context while executing scopedCallback.
-	   *
-	   * A typical use case might look like
-	   *
-	   *  render: function() {
-	   *    var children = ReactContext.withContext({foo: 'foo'}, () => (
-	   *
-	   *    ));
-	   *    return <div>{children}</div>;
-	   *  }
-	   *
-	   * @param {object} newContext New context to merge into the existing context
-	   * @param {function} scopedCallback Callback to run with the new context
-	   * @return {ReactComponent|array<ReactComponent>}
-	   */
-	  withContext: function(newContext, scopedCallback) {
-	    var result;
-	    var previousContext = ReactContext.current;
-	    ReactContext.current = assign({}, previousContext, newContext);
-	    try {
-	      result = scopedCallback();
-	    } finally {
-	      ReactContext.current = previousContext;
-	    }
-	    return result;
-	  }
-
-	};
-
-	module.exports = ReactContext;
-
-
-/***/ },
-/* 79 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * Copyright 2013-2014, Facebook, Inc.
-	 * All rights reserved.
-	 *
-	 * This source code is licensed under the BSD-style license found in the
-	 * LICENSE file in the root directory of this source tree. An additional grant
-	 * of patent rights can be found in the PATENTS file in the same directory.
-	 *
-	 * @providesModule ReactCurrentOwner
-	 */
-
-	"use strict";
-
-	/**
-	 * Keeps track of the current owner.
-	 *
-	 * The current owner is the component who should own any components that are
-	 * currently being constructed.
-	 *
-	 * The depth indicate how many composite components are above this render level.
-	 */
-	var ReactCurrentOwner = {
-
-	  /**
-	   * @internal
-	   * @type {ReactComponent}
-	   */
-	  current: null
-
-	};
-
-	module.exports = ReactCurrentOwner;
 
 
 /***/ }
