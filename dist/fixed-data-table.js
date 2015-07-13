@@ -438,9 +438,6 @@ var FixedDataTable =
 	      this._scrollHelper.scrollTo(props.scrollTop);
 	    }
 	    this._didScrollStop = debounceCore(this._didScrollStop, 160, this);
-	    if (props.handleTouch) {
-	      this.tScroller = new Scroller(this._handleTouchScroll);
-	    }
 
 	    return this._calculateState(this.props);
 	  },
@@ -460,21 +457,6 @@ var FixedDataTable =
 	      this.props.overflowY !== 'hidden' // Should handle vertical scroll
 	    );
 
-	  },
-
-	  _handleTouchStart:function(e) {
-	    this.tScroller.doTouchStart(e.touches, e.timeStamp)
-	    e.preventDefault()
-	  },
-
-	  _handleTouchMove:function(e) {
-	    this.tScroller.doTouchMove(e.touches, e.timeStamp, e.scale)
-	    e.preventDefault()
-	  },
-
-	  _handleTouchEnd:function(e) {
-	    this.tScroller.doTouchEnd(e.timeStamp)
-	    e.preventDefault()
 	  },
 
 	  _reportContentHeight:function() {
@@ -662,9 +644,6 @@ var FixedDataTable =
 	      React.createElement("div", {
 	        className: cx('public/fixedDataTable/main'), 
 	        onWheel: this._wheelHandler.onWheel, 
-	        onTouchStart: props.handleTouch ? this._handleTouchStart : null, 
-	        onTouchMove: props.handleTouch ? this._handleTouchMove : null, 
-	        onTouchEnd: props.handleTouch ? this._handleTouchEnd : null, 
 	        style: {height: state.height, width: state.width}}, 
 	        React.createElement("div", {
 	          className: cx('fixedDataTable/rowsContainer'), 
@@ -946,16 +925,6 @@ var FixedDataTable =
 	    scrollX = Math.min(scrollX, maxScrollX);
 	    scrollY = Math.min(scrollY, maxScrollY);
 
-	    if (props.handleTouch) {
-	      this.tScroller.setDimensions(
-	        props.width,
-	        bodyHeight,
-	        scrollContentWidth,
-	        scrollContentHeight
-	      );
-	      this.tScroller.scrollTo(scrollX, scrollY);
-	    }
-
 	    if (!maxScrollY) {
 	      // no vertical scrollbar necessary, use the totals we tracked so we
 	      // can shrink-to-fit vertically
@@ -1209,29 +1178,6 @@ var FixedDataTable =
 	      }, this._onScroll);
 	      this._didScrollStop();
 	    }
-	  },
-
-	  _handleTouchScroll:function(scrollX, scrollY) {
-	    if (this.isMounted() && scrollX !== this.state.scrollX) {
-	      this.setState({
-	        scrollX: scrollX,
-	      });
-	    }
-	    if (this.isMounted() && scrollY !== this.state.scrollY) {
-	      var scrollState = this._scrollHelper.scrollTo(Math.round(scrollY));
-	      this.setState({
-	        firstRowIndex: scrollState.index,
-	        firstRowOffset: scrollState.offset,
-	        scrollY: scrollState.position,
-	        scrollContentHeight: scrollState.contentHeight,
-	        bodyHeight: this._getHeaderScrollHeight(scrollState.position),
-	        groupHeaderHeight: this.props.groupHeaderScrollsOut
-	          ? Math.max(this.props.groupHeaderHeight - scrollState.position,
-	                     this.props.groupHeaderMinimumScrollOut || 0)
-	          : this.props.groupHeaderHeight,
-	      });
-	    }
-	    this._didScrollStop();
 	  },
 
 
@@ -1704,7 +1650,7 @@ var FixedDataTable =
 	 * @providesModule ReactComponentWithPureRenderMixin
 	 */
 
-	module.exports = __webpack_require__(60);
+	module.exports = __webpack_require__(61);
 
 
 /***/ },
@@ -3306,7 +3252,7 @@ var FixedDataTable =
 	 * @providesModule cloneWithProps
 	 */
 
-	module.exports = __webpack_require__(61);
+	module.exports = __webpack_require__(60);
 
 
 /***/ },
@@ -6023,59 +5969,6 @@ var FixedDataTable =
 /* 60 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/**
-	 * Copyright 2013-2014, Facebook, Inc.
-	 * All rights reserved.
-	 *
-	 * This source code is licensed under the BSD-style license found in the
-	 * LICENSE file in the root directory of this source tree. An additional grant
-	 * of patent rights can be found in the PATENTS file in the same directory.
-	 *
-	* @providesModule ReactComponentWithPureRenderMixin
-	*/
-
-	"use strict";
-
-	var shallowEqual = __webpack_require__(68);
-
-	/**
-	 * If your React component's render function is "pure", e.g. it will render the
-	 * same result given the same props and state, provide this Mixin for a
-	 * considerable performance boost.
-	 *
-	 * Most React components have pure render functions.
-	 *
-	 * Example:
-	 *
-	 *   var ReactComponentWithPureRenderMixin =
-	 *     require('ReactComponentWithPureRenderMixin');
-	 *   React.createClass({
-	 *     mixins: [ReactComponentWithPureRenderMixin],
-	 *
-	 *     render: function() {
-	 *       return <div className={this.props.className}>foo</div>;
-	 *     }
-	 *   });
-	 *
-	 * Note: This only checks shallow equality for props and state. If these contain
-	 * complex data structures this mixin may have false-negatives for deeper
-	 * differences. Only mixin to components which have simple props and state, or
-	 * use `forceUpdate()` when you know deep data structures have changed.
-	 */
-	var ReactComponentWithPureRenderMixin = {
-	  shouldComponentUpdate: function(nextProps, nextState) {
-	    return !shallowEqual(this.props, nextProps) ||
-	           !shallowEqual(this.state, nextState);
-	  }
-	};
-
-	module.exports = ReactComponentWithPureRenderMixin;
-
-
-/***/ },
-/* 61 */
-/***/ function(module, exports, __webpack_require__) {
-
 	/* WEBPACK VAR INJECTION */(function(process) {/**
 	 * Copyright 2013-2014, Facebook, Inc.
 	 * All rights reserved.
@@ -6090,11 +5983,11 @@ var FixedDataTable =
 
 	"use strict";
 
-	var ReactElement = __webpack_require__(69);
-	var ReactPropTransferer = __webpack_require__(70);
+	var ReactElement = __webpack_require__(68);
+	var ReactPropTransferer = __webpack_require__(69);
 
-	var keyOf = __webpack_require__(71);
-	var warning = __webpack_require__(72);
+	var keyOf = __webpack_require__(70);
+	var warning = __webpack_require__(71);
 
 	var CHILDREN_PROP = keyOf({children: null});
 
@@ -6133,6 +6026,59 @@ var FixedDataTable =
 	module.exports = cloneWithProps;
 	
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(73)))
+
+/***/ },
+/* 61 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	* @providesModule ReactComponentWithPureRenderMixin
+	*/
+
+	"use strict";
+
+	var shallowEqual = __webpack_require__(72);
+
+	/**
+	 * If your React component's render function is "pure", e.g. it will render the
+	 * same result given the same props and state, provide this Mixin for a
+	 * considerable performance boost.
+	 *
+	 * Most React components have pure render functions.
+	 *
+	 * Example:
+	 *
+	 *   var ReactComponentWithPureRenderMixin =
+	 *     require('ReactComponentWithPureRenderMixin');
+	 *   React.createClass({
+	 *     mixins: [ReactComponentWithPureRenderMixin],
+	 *
+	 *     render: function() {
+	 *       return <div className={this.props.className}>foo</div>;
+	 *     }
+	 *   });
+	 *
+	 * Note: This only checks shallow equality for props and state. If these contain
+	 * complex data structures this mixin may have false-negatives for deeper
+	 * differences. Only mixin to components which have simple props and state, or
+	 * use `forceUpdate()` when you know deep data structures have changed.
+	 */
+	var ReactComponentWithPureRenderMixin = {
+	  shouldComponentUpdate: function(nextProps, nextState) {
+	    return !shallowEqual(this.props, nextProps) ||
+	           !shallowEqual(this.state, nextState);
+	  }
+	};
+
+	module.exports = ReactComponentWithPureRenderMixin;
+
 
 /***/ },
 /* 62 */
@@ -6706,54 +6652,6 @@ var FixedDataTable =
 /* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/**
-	 * Copyright 2013-2014, Facebook, Inc.
-	 * All rights reserved.
-	 *
-	 * This source code is licensed under the BSD-style license found in the
-	 * LICENSE file in the root directory of this source tree. An additional grant
-	 * of patent rights can be found in the PATENTS file in the same directory.
-	 *
-	 * @providesModule shallowEqual
-	 */
-
-	"use strict";
-
-	/**
-	 * Performs equality by iterating through keys on an object and returning
-	 * false when any key has values which are not strictly equal between
-	 * objA and objB. Returns true when the values of all keys are strictly equal.
-	 *
-	 * @return {boolean}
-	 */
-	function shallowEqual(objA, objB) {
-	  if (objA === objB) {
-	    return true;
-	  }
-	  var key;
-	  // Test for A's keys different from B.
-	  for (key in objA) {
-	    if (objA.hasOwnProperty(key) &&
-	        (!objB.hasOwnProperty(key) || objA[key] !== objB[key])) {
-	      return false;
-	    }
-	  }
-	  // Test for B's keys missing from A.
-	  for (key in objB) {
-	    if (objB.hasOwnProperty(key) && !objA.hasOwnProperty(key)) {
-	      return false;
-	    }
-	  }
-	  return true;
-	}
-
-	module.exports = shallowEqual;
-
-
-/***/ },
-/* 69 */
-/***/ function(module, exports, __webpack_require__) {
-
 	/* WEBPACK VAR INJECTION */(function(process) {/**
 	 * Copyright 2014, Facebook, Inc.
 	 * All rights reserved.
@@ -6767,10 +6665,10 @@ var FixedDataTable =
 
 	"use strict";
 
-	var ReactContext = __webpack_require__(74);
-	var ReactCurrentOwner = __webpack_require__(75);
+	var ReactContext = __webpack_require__(78);
+	var ReactCurrentOwner = __webpack_require__(79);
 
-	var warning = __webpack_require__(72);
+	var warning = __webpack_require__(71);
 
 	var RESERVED_PROPS = {
 	  key: true,
@@ -7000,7 +6898,7 @@ var FixedDataTable =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(73)))
 
 /***/ },
-/* 70 */
+/* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
@@ -7016,11 +6914,11 @@ var FixedDataTable =
 
 	"use strict";
 
-	var assign = __webpack_require__(76);
-	var emptyFunction = __webpack_require__(77);
-	var invariant = __webpack_require__(78);
-	var joinClasses = __webpack_require__(79);
-	var warning = __webpack_require__(72);
+	var assign = __webpack_require__(75);
+	var emptyFunction = __webpack_require__(74);
+	var invariant = __webpack_require__(76);
+	var joinClasses = __webpack_require__(77);
+	var warning = __webpack_require__(71);
 
 	var didWarn = false;
 
@@ -7170,7 +7068,7 @@ var FixedDataTable =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(73)))
 
 /***/ },
-/* 71 */
+/* 70 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -7210,7 +7108,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 72 */
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
@@ -7226,7 +7124,7 @@ var FixedDataTable =
 
 	"use strict";
 
-	var emptyFunction = __webpack_require__(77);
+	var emptyFunction = __webpack_require__(74);
 
 	/**
 	 * Similar to invariant but only logs a warning if the condition is not met.
@@ -7256,6 +7154,54 @@ var FixedDataTable =
 	module.exports = warning;
 	
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(73)))
+
+/***/ },
+/* 72 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule shallowEqual
+	 */
+
+	"use strict";
+
+	/**
+	 * Performs equality by iterating through keys on an object and returning
+	 * false when any key has values which are not strictly equal between
+	 * objA and objB. Returns true when the values of all keys are strictly equal.
+	 *
+	 * @return {boolean}
+	 */
+	function shallowEqual(objA, objB) {
+	  if (objA === objB) {
+	    return true;
+	  }
+	  var key;
+	  // Test for A's keys different from B.
+	  for (key in objA) {
+	    if (objA.hasOwnProperty(key) &&
+	        (!objB.hasOwnProperty(key) || objA[key] !== objB[key])) {
+	      return false;
+	    }
+	  }
+	  // Test for B's keys missing from A.
+	  for (key in objB) {
+	    if (objB.hasOwnProperty(key) && !objA.hasOwnProperty(key)) {
+	      return false;
+	    }
+	  }
+	  return true;
+	}
+
+	module.exports = shallowEqual;
+
 
 /***/ },
 /* 73 */
@@ -7361,100 +7307,34 @@ var FixedDataTable =
 	 * LICENSE file in the root directory of this source tree. An additional grant
 	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
-	 * @providesModule ReactContext
+	 * @providesModule emptyFunction
 	 */
 
-	"use strict";
-
-	var assign = __webpack_require__(76);
+	function makeEmptyFunction(arg) {
+	  return function() {
+	    return arg;
+	  };
+	}
 
 	/**
-	 * Keeps track of the current context.
-	 *
-	 * The context is automatically passed down the component ownership hierarchy
-	 * and is accessible via `this.context` on ReactCompositeComponents.
+	 * This function accepts and discards inputs; it has no side effects. This is
+	 * primarily useful idiomatically for overridable function endpoints which
+	 * always need to be callable, since JS lacks a null-call idiom ala Cocoa.
 	 */
-	var ReactContext = {
+	function emptyFunction() {}
 
-	  /**
-	   * @internal
-	   * @type {object}
-	   */
-	  current: {},
+	emptyFunction.thatReturns = makeEmptyFunction;
+	emptyFunction.thatReturnsFalse = makeEmptyFunction(false);
+	emptyFunction.thatReturnsTrue = makeEmptyFunction(true);
+	emptyFunction.thatReturnsNull = makeEmptyFunction(null);
+	emptyFunction.thatReturnsThis = function() { return this; };
+	emptyFunction.thatReturnsArgument = function(arg) { return arg; };
 
-	  /**
-	   * Temporarily extends the current context while executing scopedCallback.
-	   *
-	   * A typical use case might look like
-	   *
-	   *  render: function() {
-	   *    var children = ReactContext.withContext({foo: 'foo'}, () => (
-	   *
-	   *    ));
-	   *    return <div>{children}</div>;
-	   *  }
-	   *
-	   * @param {object} newContext New context to merge into the existing context
-	   * @param {function} scopedCallback Callback to run with the new context
-	   * @return {ReactComponent|array<ReactComponent>}
-	   */
-	  withContext: function(newContext, scopedCallback) {
-	    var result;
-	    var previousContext = ReactContext.current;
-	    ReactContext.current = assign({}, previousContext, newContext);
-	    try {
-	      result = scopedCallback();
-	    } finally {
-	      ReactContext.current = previousContext;
-	    }
-	    return result;
-	  }
-
-	};
-
-	module.exports = ReactContext;
+	module.exports = emptyFunction;
 
 
 /***/ },
 /* 75 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * Copyright 2013-2014, Facebook, Inc.
-	 * All rights reserved.
-	 *
-	 * This source code is licensed under the BSD-style license found in the
-	 * LICENSE file in the root directory of this source tree. An additional grant
-	 * of patent rights can be found in the PATENTS file in the same directory.
-	 *
-	 * @providesModule ReactCurrentOwner
-	 */
-
-	"use strict";
-
-	/**
-	 * Keeps track of the current owner.
-	 *
-	 * The current owner is the component who should own any components that are
-	 * currently being constructed.
-	 *
-	 * The depth indicate how many composite components are above this render level.
-	 */
-	var ReactCurrentOwner = {
-
-	  /**
-	   * @internal
-	   * @type {ReactComponent}
-	   */
-	  current: null
-
-	};
-
-	module.exports = ReactCurrentOwner;
-
-
-/***/ },
-/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -7505,45 +7385,7 @@ var FixedDataTable =
 
 
 /***/ },
-/* 77 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * Copyright 2013-2014, Facebook, Inc.
-	 * All rights reserved.
-	 *
-	 * This source code is licensed under the BSD-style license found in the
-	 * LICENSE file in the root directory of this source tree. An additional grant
-	 * of patent rights can be found in the PATENTS file in the same directory.
-	 *
-	 * @providesModule emptyFunction
-	 */
-
-	function makeEmptyFunction(arg) {
-	  return function() {
-	    return arg;
-	  };
-	}
-
-	/**
-	 * This function accepts and discards inputs; it has no side effects. This is
-	 * primarily useful idiomatically for overridable function endpoints which
-	 * always need to be callable, since JS lacks a null-call idiom ala Cocoa.
-	 */
-	function emptyFunction() {}
-
-	emptyFunction.thatReturns = makeEmptyFunction;
-	emptyFunction.thatReturnsFalse = makeEmptyFunction(false);
-	emptyFunction.thatReturnsTrue = makeEmptyFunction(true);
-	emptyFunction.thatReturnsNull = makeEmptyFunction(null);
-	emptyFunction.thatReturnsThis = function() { return this; };
-	emptyFunction.thatReturnsArgument = function(arg) { return arg; };
-
-	module.exports = emptyFunction;
-
-
-/***/ },
-/* 78 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
@@ -7603,7 +7445,7 @@ var FixedDataTable =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(73)))
 
 /***/ },
-/* 79 */
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -7645,6 +7487,110 @@ var FixedDataTable =
 	}
 
 	module.exports = joinClasses;
+
+
+/***/ },
+/* 78 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule ReactContext
+	 */
+
+	"use strict";
+
+	var assign = __webpack_require__(75);
+
+	/**
+	 * Keeps track of the current context.
+	 *
+	 * The context is automatically passed down the component ownership hierarchy
+	 * and is accessible via `this.context` on ReactCompositeComponents.
+	 */
+	var ReactContext = {
+
+	  /**
+	   * @internal
+	   * @type {object}
+	   */
+	  current: {},
+
+	  /**
+	   * Temporarily extends the current context while executing scopedCallback.
+	   *
+	   * A typical use case might look like
+	   *
+	   *  render: function() {
+	   *    var children = ReactContext.withContext({foo: 'foo'}, () => (
+	   *
+	   *    ));
+	   *    return <div>{children}</div>;
+	   *  }
+	   *
+	   * @param {object} newContext New context to merge into the existing context
+	   * @param {function} scopedCallback Callback to run with the new context
+	   * @return {ReactComponent|array<ReactComponent>}
+	   */
+	  withContext: function(newContext, scopedCallback) {
+	    var result;
+	    var previousContext = ReactContext.current;
+	    ReactContext.current = assign({}, previousContext, newContext);
+	    try {
+	      result = scopedCallback();
+	    } finally {
+	      ReactContext.current = previousContext;
+	    }
+	    return result;
+	  }
+
+	};
+
+	module.exports = ReactContext;
+
+
+/***/ },
+/* 79 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-2014, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule ReactCurrentOwner
+	 */
+
+	"use strict";
+
+	/**
+	 * Keeps track of the current owner.
+	 *
+	 * The current owner is the component who should own any components that are
+	 * currently being constructed.
+	 *
+	 * The depth indicate how many composite components are above this render level.
+	 */
+	var ReactCurrentOwner = {
+
+	  /**
+	   * @internal
+	   * @type {ReactComponent}
+	   */
+	  current: null
+
+	};
+
+	module.exports = ReactCurrentOwner;
 
 
 /***/ }

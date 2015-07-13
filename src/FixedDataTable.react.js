@@ -280,9 +280,6 @@ var FixedDataTable = React.createClass({
       this._scrollHelper.scrollTo(props.scrollTop);
     }
     this._didScrollStop = debounceCore(this._didScrollStop, 160, this);
-    if (props.handleTouch) {
-      this.tScroller = new Scroller(this._handleTouchScroll);
-    }
 
     return this._calculateState(this.props);
   },
@@ -302,21 +299,6 @@ var FixedDataTable = React.createClass({
       this.props.overflowY !== 'hidden' // Should handle vertical scroll
     );
 
-  },
-
-  _handleTouchStart(e) {
-    this.tScroller.doTouchStart(e.touches, e.timeStamp)
-    e.preventDefault()
-  },
-
-  _handleTouchMove(e) {
-    this.tScroller.doTouchMove(e.touches, e.timeStamp, e.scale)
-    e.preventDefault()
-  },
-
-  _handleTouchEnd(e) {
-    this.tScroller.doTouchEnd(e.timeStamp)
-    e.preventDefault()
   },
 
   _reportContentHeight() {
@@ -504,9 +486,6 @@ var FixedDataTable = React.createClass({
       <div
         className={cx('public/fixedDataTable/main')}
         onWheel={this._wheelHandler.onWheel}
-        onTouchStart={props.handleTouch ? this._handleTouchStart : null}
-        onTouchMove={props.handleTouch ? this._handleTouchMove : null}
-        onTouchEnd={props.handleTouch ? this._handleTouchEnd : null}
         style={{height: state.height, width: state.width}}>
         <div
           className={cx('fixedDataTable/rowsContainer')}
@@ -788,16 +767,6 @@ var FixedDataTable = React.createClass({
     scrollX = Math.min(scrollX, maxScrollX);
     scrollY = Math.min(scrollY, maxScrollY);
 
-    if (props.handleTouch) {
-      this.tScroller.setDimensions(
-        props.width,
-        bodyHeight,
-        scrollContentWidth,
-        scrollContentHeight
-      );
-      this.tScroller.scrollTo(scrollX, scrollY);
-    }
-
     if (!maxScrollY) {
       // no vertical scrollbar necessary, use the totals we tracked so we
       // can shrink-to-fit vertically
@@ -1051,29 +1020,6 @@ var FixedDataTable = React.createClass({
       }, this._onScroll);
       this._didScrollStop();
     }
-  },
-
-  _handleTouchScroll(scrollX, scrollY) {
-    if (this.isMounted() && scrollX !== this.state.scrollX) {
-      this.setState({
-        scrollX: scrollX,
-      });
-    }
-    if (this.isMounted() && scrollY !== this.state.scrollY) {
-      var scrollState = this._scrollHelper.scrollTo(Math.round(scrollY));
-      this.setState({
-        firstRowIndex: scrollState.index,
-        firstRowOffset: scrollState.offset,
-        scrollY: scrollState.position,
-        scrollContentHeight: scrollState.contentHeight,
-        bodyHeight: this._getHeaderScrollHeight(scrollState.position),
-        groupHeaderHeight: this.props.groupHeaderScrollsOut
-          ? Math.max(this.props.groupHeaderHeight - scrollState.position,
-                     this.props.groupHeaderMinimumScrollOut || 0)
-          : this.props.groupHeaderHeight,
-      });
-    }
-    this._didScrollStop();
   },
 
 
